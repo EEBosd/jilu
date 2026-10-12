@@ -12,9 +12,9 @@ PicGo 桌面程序无需在访问者电脑上运行。网站后台直接连接�
 
 ## 部署
 
-1. 用对 `EEBosd/jilu` 有写入权限的 GitHub 账号推送本仓库至 `main`。在仓库 Settings → Pages 中将 Source 设为 **GitHub Actions**；网站工作流会部署 `docs/`。
+1. 用对 `EEBosd/jilu` 有写入权限的 GitHub 账号推送本仓库至 `main`。在仓库 Settings → Pages 中将 Source 设为 **GitHub Actions**；如果协作者无权更改此设置，由仓库所有者 `EEBosd` 操作。网站工作流会部署 `docs/`。
 2. 在 Cloudflare 创建 Worker，进入 `worker/` 执行 `npm install`、`npx wrangler login`。
-3. 创建一个仅授权此仓库 **Contents: Read and write** 的 GitHub fine-grained token。在 `worker/` 执行 `npx wrangler secret put GITHUB_TOKEN`，按隐藏输入提示粘贴。不要把 token 写进文件或聊天。
+3. 为 Worker 准备 GitHub 写入凭证。如果由仓库所有者 `EEBosd` 操作，可创建仅授权 `jilu`、**Contents: Read and write** 的 fine-grained token。如果由仓库协作者独立部署，GitHub 当前不支持其用 fine-grained token 写入他人个人仓库；由于本仓库公开，协作者可创建自己的 classic token，并只勾选 `public_repo` 权限。在 `worker/` 执行 `npx wrangler secret put GITHUB_TOKEN`，按隐藏输入提示粘贴。不要把 token 写进文件或聊天。
 4. 生成至少 32 个随机字符的分享凭证，在 `worker/` 执行 `npx wrangler secret put SHARE_TOKEN` 并通过隐藏输入设置。此凭证不要写入仓库。运行 `npm run deploy`。
 5. 将部署返回的 Worker HTTPS 地址填入 `docs/config.js` 的 `window.DM_API_BASE`，提交并推送。最终分享 **`https://eebosd.github.io/jilu/#access=你的分享凭证`**。网址中的 `#access=` 部分必须一并分享；网页不会显示登录页。
 
