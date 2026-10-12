@@ -1,0 +1,11 @@
+name = "jilu-trip-api"
+main = "src/index.js"
+compatibility_date = "2025-04-01"
+workers_dev = true
+
+[vars]
+GH_OWNER = "EEBosd"
+GH_REPO = "jilu"
+GH_BRANCH = "main"
+PICGO_PATH = "media/photos"
+ALLOWED_ORIGIN = "https://eebosd.github.io"

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#f4ede3" />
+    <title>一起走过 · 出游记录</title>
+    <meta name="description" content="用照片、视频和文字收藏每次出游。" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="site-header">
+        <a class="brand" href="./" aria-label="一起走过首页">
+          <span class="brand-mark" aria-hidden="true">✳</span>
+          <span>一起走过</span>
+        </a>
+        <button class="button button-primary" id="new-trip" type="button">＋ 记下一次出游</button>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <p class="eyebrow">OUR LITTLE JOURNAL</p>
+            <h1 id="hero-title">把每一次出发，<br /><em>留在这里。</em></h1>
+            <p class="hero-description">一段路，一张照片，一段视频。把值得回看的日子慢慢收集起来。</p>
+            <div class="hero-stats"><span id="trip-count">0 次出游</span><span class="dot">·</span><span id="media-count">0 份回忆</span></div>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="sun"></div>
+            <div class="mountain mountain-back"></div>
+            <div class="mountain mountain-front"></div>
+            <div class="road"></div>
+            <span class="hero-art-caption">the days we keep</span>
+          </div>
+        </section>
+
+        <section class="journal" aria-labelledby="journal-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">MEMORIES</p><h2 id="journal-title">出游时间线</h2></div>
+            <span class="section-note">从最近的一次开始</span>
+          </div>
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+          <div id="trip-list" class="trip-list"></div>
+        </section>
+      </main>
+
+      <footer class="site-footer">每段路，都有值得记住的风景。<span>✳</span></footer>
+    </div>
+
+    <dialog id="editor" class="editor-dialog">
+      <form id="trip-form" class="editor-form">
+        <div class="dialog-heading"><div><p class="eyebrow">NEW MEMORY</p><h2 id="editor-title">记下一次出游</h2></div><button id="close-editor" class="icon-button" type="button" aria-label="关闭">×</button></div>
+        <label>标题 <input name="title" maxlength="80" required placeholder="比如：海边的那个下午" /></label>
+        <div class="form-row"><label>日期 <input name="date" type="date" required /></label><label>地点 <input name="location" maxlength="80" placeholder="去了哪里？" /></label></div>
+        <label>这一天 <textarea name="notes" maxlength="5000" rows="5" placeholder="写下想记住的故事……"></textarea></label>
+        <div class="media-field"><span class="field-label">照片与视频</span><p>支持 JPG、PNG、WebP 照片及 MP4、MOV 视频；视频每个不超过 50 MB。</p><input id="media-input" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" multiple /><div id="selected-media" class="selected-media"></div></div>
+        <div id="upload-status" class="upload-status" role="status" aria-live="polite"></div>
+        <div class="dialog-actions"><button id="cancel-editor" class="button button-ghost" type="button">取消</button><button id="save-trip" class="button button-primary" type="submit">保存记录</button></div>
+      </form>
+    </dialog>
+
+    <script src="./config.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
