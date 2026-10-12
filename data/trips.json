@@ -14,21 +14,5 @@
     ],
     "createdAt": "2026-10-12T13:27:22.439Z",
     "updatedAt": "2026-10-12T13:27:22.439Z"
-  },
-  {
-    "id": "507b34e5-1d9e-4b02-9c45-0fcfc88206df",
-    "title": "部署自检记录",
-    "date": "2026-10-12",
-    "location": "自检",
-    "notes": "这条记录由部署验证脚本创建，稍后自动删除。",
-    "media": [
-      {
-        "kind": "photo",
-        "url": "https://raw.githubusercontent.com/EEBosd/jilu/main/media/photos/9941020c-af49-48b5-8515-50a2852c89db.png",
-        "name": "测试照片.png"
-      }
-    ],
-    "createdAt": "2026-10-12T13:27:36.962Z",
-    "updatedAt": "2026-10-12T13:27:36.962Z"
   }
 ]
