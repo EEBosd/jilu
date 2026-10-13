@@ -1,4 +1,8 @@
-const API_BASE = String(window.DM_API_BASE || "").replace(/\/$/, "");
+// config.js 里没有 DM_API_BASE 这个字段，说明后台压根没配（例如只把静态页传到了 Pages）。
+// 注意：设成空字符串是**合法且有意义**的，表示前后端同源部署，请求走相对路径 ——
+// 所以不能用 `!API_BASE` 来判断"有没有后台"，空串在 JS 里是假值，会把同源部署误判成未配置。
+const BACKEND_CONFIGURED = typeof window.DM_API_BASE === "string";
+const API_BASE = BACKEND_CONFIGURED ? window.DM_API_BASE.replace(/\/$/, "") : "";
 const accessFromLink = new URLSearchParams(location.hash.slice(1)).get("access");
 if (accessFromLink) localStorage.setItem("jilu-access", accessFromLink);
 const accessToken = accessFromLink || localStorage.getItem("jilu-access") || "";
@@ -47,8 +51,9 @@ async function api(path, options = {}) {
 
 // GitHub 的媒体地址在国内会被阻断，统一改走后端代理。
 // 只影响显示，仓库里存的仍然是原始地址，数据不用迁移。
+// 这里不能因为 API_BASE 是空串就跳过改写 —— 空串代表同源，代理地址就是 /media/xxx。
 function mediaUrl(url) {
-  if (!API_BASE || !url) return url;
+  if (!url) return url;
   let match = String(url).match(/^https:\/\/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[^/]+\/(.+)$/);
   if (match) return `${API_BASE}/media/${match[1]}`;
   match = String(url).match(/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\/([^/]+)\/(.+)$/);
@@ -247,7 +252,7 @@ document.querySelector("#new-trip").addEventListener("click", () => openEditor()
 document.querySelector("#close-editor").addEventListener("click", () => editor.close());
 document.querySelector("#cancel-editor").addEventListener("click", () => editor.close());
 form.addEventListener("submit", saveTrip);
-if (!API_BASE) {
+if (!BACKEND_CONFIGURED) {
   document.querySelector("#new-trip").disabled = true;
   setStatus("网站后台尚未配置，暂时无法同步和上传。请先按 README 完成部署配置。");
 } else if (!accessToken) {

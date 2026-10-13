@@ -232,6 +232,16 @@ async function serveReleaseAsset(request, env, tag, name) {
   return new Response(response.body, { status: response.status, headers });
 }
 
+async function readJson(request) {
+  // 客户端发来空 body 或坏 JSON 时，request.json() 抛的是 SyntaxError，
+  // 不包一层的话会被最外层当成 500 服务器错误，实际是客户端的错。
+  try {
+    return await request.json();
+  } catch {
+    throw new HttpError(400, "请求内容不是合法 JSON");
+  }
+}
+
 async function handle(request, env) {
   const origin = request.headers.get("Origin");
   const cors = corsHeaders(origin, env);
@@ -269,7 +279,7 @@ async function handle(request, env) {
       return json({ trips }, 200, cors);
     }
     if (path === "/api/trips" && request.method === "POST") {
-      const fields = cleanTrip(await request.json(), env);
+      const fields = cleanTrip(await readJson(request), env);
       const now = new Date().toISOString();
       const trip = { id: crypto.randomUUID(), ...fields, createdAt: now, updatedAt: now };
       await mutateTrips(env, trips => { trips.push(trip); return trip; });
@@ -277,7 +287,7 @@ async function handle(request, env) {
     }
     const match = path.match(/^\/api\/trips\/([a-f0-9-]{36})$/i);
     if (match && request.method === "PUT") {
-      const input = await request.json();
+      const input = await readJson(request);
       const fields = cleanTrip(input, env);
       const trip = await mutateTrips(env, trips => {
         const index = trips.findIndex(item => item.id === match[1]);
