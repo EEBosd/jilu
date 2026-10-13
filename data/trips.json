@@ -14,5 +14,21 @@
     ],
     "createdAt": "2026-10-12T13:27:22.439Z",
     "updatedAt": "2026-10-12T13:27:22.439Z"
+  },
+  {
+    "id": "7f76d5c8-b3f9-4a46-a373-6c7ea38c54bb",
+    "title": "内置发布自检",
+    "date": "2026-10-13",
+    "location": "自检",
+    "notes": "这条记录由验收脚本创建，稍后自动删除。",
+    "media": [
+      {
+        "kind": "photo",
+        "url": "https://raw.githubusercontent.com/EEBosd/jilu/main/media/photos/b98e57fa-f997-4128-9665-6de7676528ee.png",
+        "name": "自检照片.png"
+      }
+    ],
+    "createdAt": "2026-10-13T09:15:48.789Z",
+    "updatedAt": "2026-10-13T09:15:48.789Z"
   }
 ]
