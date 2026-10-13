@@ -171,17 +171,98 @@ async function uploadVideo(request, env) {
   return { kind: "video", url: asset.browser_download_url, name: name.slice(0, 200) };
 }
 
+const MIME_TYPES = {
+  jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp",
+  gif: "image/gif", avif: "image/avif",
+  mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm"
+};
+
+function guessType(name) {
+  const ext = String(name).split(".").pop().toLowerCase();
+  return MIME_TYPES[ext] || "application/octet-stream";
+}
+
+function repoFilePath(pathname, prefix) {
+  return pathname.slice(prefix.length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
+}
+
+// 转发仓库里的文件（照片）。走 api.github.com，国内可直连。
+async function serveRepoFile(env, repoPath) {
+  if (!repoPath || repoPath.includes("..")) throw new HttpError(400, "路径无效");
+  const encoded = repoPath.split("/").map(encodeURIComponent).join("/");
+  const response = await github(env, `/contents/${encoded}?ref=${encodeURIComponent(env.GH_BRANCH || "main")}`, {
+    headers: { Accept: "application/vnd.github.raw" }
+  });
+  if (response.status === 404) throw new HttpError(404, "文件不存在");
+  if (!response.ok) throw new HttpError(502, "读取媒体失败");
+  // 注意：GitHub 的 raw 响应会把 Content-Type 回显成 application/vnd.github.raw，
+  // 不能透传，必须按扩展名自己判断，否则浏览器不认。
+  return new Response(response.body, {
+    status: 200,
+    headers: {
+      "Content-Type": guessType(repoPath),
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
+}
+
+// 转发 Releases 里的视频资源，并透传 Range 以支持拖动进度条。
+async function serveReleaseAsset(request, env, tag, name) {
+  const releaseResponse = await github(env, `/releases/tags/${encodeURIComponent(tag)}`);
+  if (!releaseResponse.ok) throw new HttpError(404, "视频不存在");
+  const release = await releaseResponse.json();
+  const asset = (release.assets || []).find(item => item.name === name);
+  if (!asset) throw new HttpError(404, "视频不存在");
+  const range = request.headers.get("Range");
+  const response = await github(env, `/releases/assets/${asset.id}`, {
+    headers: { Accept: "application/octet-stream", ...(range ? { Range: range } : {}) }
+  });
+  if (!response.ok && response.status !== 206) throw new HttpError(502, "读取视频失败");
+  const headers = {
+    "Content-Type": asset.content_type || guessType(name),
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "public, max-age=86400",
+    "Access-Control-Allow-Origin": "*"
+  };
+  const contentRange = response.headers.get("Content-Range");
+  if (contentRange) headers["Content-Range"] = contentRange;
+  const contentLength = response.headers.get("Content-Length");
+  if (contentLength) headers["Content-Length"] = contentLength;
+  return new Response(response.body, { status: response.status, headers });
+}
+
 async function handle(request, env) {
   const origin = request.headers.get("Origin");
   const cors = corsHeaders(origin, env);
   if (request.method === "OPTIONS") {
     return new Response(null, { status: origin && origin !== env.ALLOWED_ORIGIN ? 403 : 204, headers: cors });
   }
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  // 媒体代理路由：<img>/<video> 标签发不出自定义请求头，所以这两条路由不校验分享令牌。
+  // 数据本身仍存放在公开的 GitHub 仓库里，暴露面与改动前一致。
+  if (path.startsWith("/media/") || path.startsWith("/video/")) {
+    if (request.method !== "GET" && request.method !== "HEAD") return json({ error: "方法不允许" }, 405);
+    if (!env.GITHUB_TOKEN || !env.GH_OWNER || !env.GH_REPO) return json({ error: "后台尚未配置" }, 503);
+    try {
+      if (path.startsWith("/media/")) return await serveRepoFile(env, repoFilePath(path, "/media/"));
+      const parts = repoFilePath(path, "/video/").split("/");
+      if (parts.length < 2) throw new HttpError(400, "视频路径无效");
+      return await serveReleaseAsset(request, env, parts[0], parts.slice(1).join("/"));
+    } catch (error) {
+      const status = error instanceof HttpError ? error.status : 500;
+      return new Response(error instanceof HttpError ? error.message : "媒体读取失败", {
+        status,
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+      });
+    }
+  }
+
   if (origin && origin !== env.ALLOWED_ORIGIN) return json({ error: "来源不允许" }, 403);
   if (!env.GITHUB_TOKEN || !env.SHARE_TOKEN || !env.GH_OWNER || !env.GH_REPO) return json({ error: "后台尚未配置" }, 503, cors);
   if (!sameToken(request.headers.get("X-Share-Token"), env.SHARE_TOKEN)) return json({ error: "分享链接无效" }, 401, cors);
-  const url = new URL(request.url);
-  const path = url.pathname;
   try {
     if (path === "/api/trips" && request.method === "GET") {
       const { trips } = await readTrips(env);

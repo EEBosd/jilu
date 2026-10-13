@@ -45,6 +45,17 @@ async function api(path, options = {}) {
   return data;
 }
 
+// GitHub 的媒体地址在国内会被阻断，统一改走后端代理。
+// 只影响显示，仓库里存的仍然是原始地址，数据不用迁移。
+function mediaUrl(url) {
+  if (!API_BASE || !url) return url;
+  let match = String(url).match(/^https:\/\/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[^/]+\/(.+)$/);
+  if (match) return `${API_BASE}/media/${match[1]}`;
+  match = String(url).match(/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\/([^/]+)\/(.+)$/);
+  if (match) return `${API_BASE}/video/${match[1]}/${match[2]}`;
+  return url;
+}
+
 function mediaElement(media) {
   const wrap = node("div", "media-item");
   if (media.kind === "video") {
@@ -52,17 +63,17 @@ function mediaElement(media) {
     video.controls = true;
     video.playsInline = true;
     video.preload = "metadata";
-    video.src = media.url;
+    video.src = mediaUrl(media.url);
     wrap.append(video);
   } else {
     const img = node("img");
     img.loading = "lazy";
     img.alt = media.name || "出游照片";
-    img.src = media.url;
+    img.src = mediaUrl(media.url);
     wrap.append(img);
   }
   const download = node("a", "", media.kind === "video" ? "下载视频" : "查看原图");
-  download.href = media.url;
+  download.href = mediaUrl(media.url);
   download.target = "_blank";
   download.rel = "noopener noreferrer";
   wrap.append(download);
@@ -90,7 +101,7 @@ function render() {
     const firstPhoto = trip.media.find(item => item.kind === "photo");
     if (firstPhoto) {
       const image = node("img");
-      image.src = firstPhoto.url;
+      image.src = mediaUrl(firstPhoto.url);
       image.alt = "";
       image.loading = "lazy";
       cover.append(image);
