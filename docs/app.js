@@ -92,7 +92,7 @@ function render() {
   mediaCountEl.textContent = `${sorted.reduce((sum, trip) => sum + trip.media.length, 0)} 份回忆`;
   if (!sorted.length) {
     const empty = node("div", "empty-state");
-    empty.append(node("div", "empty-icon", "✳"), node("h3", "", "还没有出游记录"), node("p", "", "从最近一次出发开始，写下你们的故事吧。"));
+    empty.append(node("div", "empty-icon", "♥"), node("h3", "", "还没有出游记录"), node("p", "", "从最近一次出发开始，写下你们的故事吧。"));
     const start = node("button", "button button-primary", "记下第一次出游");
     start.type = "button";
     start.addEventListener("click", () => openEditor());
@@ -100,26 +100,42 @@ function render() {
     listEl.append(empty);
     return;
   }
+  let currentYear = "";
   for (const trip of sorted) {
+    // 时间线上按年份分节，让"一起走过的年头"一眼看得出来
+    const year = String(trip.date || "").slice(0, 4);
+    if (year && year !== currentYear) {
+      currentYear = year;
+      listEl.append(node("div", "timeline-year", `${year} 年`));
+    }
     const card = node("article", "trip-card");
     const cover = node("div", "trip-cover");
-    const firstPhoto = trip.media.find(item => item.kind === "photo");
-    if (firstPhoto) {
+    // 封面取第一张照片。它就是这张照片的入口（点开看原图），
+    // 所以下面画廊里不再重复放它，否则同一张图会出现两次、右边还空一大块。
+    const coverPhoto = trip.media.find(item => item.kind === "photo") || null;
+    if (coverPhoto) {
       const image = node("img");
-      image.src = mediaUrl(firstPhoto.url);
+      image.src = mediaUrl(coverPhoto.url);
       image.alt = "";
       image.loading = "lazy";
-      cover.append(image);
-    } else cover.append(node("div", "cover-fallback", "✳"));
+      const link = node("a", "cover-link");
+      link.href = mediaUrl(coverPhoto.url);
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.setAttribute("aria-label", `查看原图：${trip.title}`);
+      link.append(image);
+      cover.append(link);
+    } else cover.append(node("div", "cover-fallback", "♥"));
     cover.append(node("span", "cover-label", trip.location || "一段新的旅程"));
     const body = node("div", "trip-body");
     const meta = node("div", "trip-meta");
     meta.append(node("span", "", niceDate(trip.date)), node("span", "", `${trip.media.length} 张 / 段`));
     body.append(meta, node("h3", "", trip.title));
     if (trip.notes) body.append(node("p", "trip-notes", trip.notes));
-    if (trip.media.length) {
+    const galleryMedia = coverPhoto ? trip.media.filter(item => item !== coverPhoto) : trip.media;
+    if (galleryMedia.length) {
       const gallery = node("div", "media-grid");
-      for (const media of trip.media) gallery.append(mediaElement(media));
+      for (const media of galleryMedia) gallery.append(mediaElement(media));
       body.append(gallery);
     }
     const actions = node("div", "trip-actions");
