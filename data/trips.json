@@ -30,5 +30,21 @@
     ],
     "createdAt": "2026-10-13T09:24:41.490Z",
     "updatedAt": "2026-10-13T09:24:41.490Z"
+  },
+  {
+    "id": "7adddfcf-60b3-4cd0-941b-49646bb1c7c9",
+    "title": "韩万友生日",
+    "date": "2026-10-14",
+    "location": "",
+    "notes": "",
+    "media": [
+      {
+        "kind": "photo",
+        "url": "https://raw.githubusercontent.com/EEBosd/jilu/main/media/photos/19176713-6fea-4545-8f53-ee10e3d56f88.jpg",
+        "name": "1792066371639.jpg"
+      }
+    ],
+    "createdAt": "2026-10-15T12:13:31.066Z",
+    "updatedAt": "2026-10-15T12:13:31.066Z"
   }
 ]
